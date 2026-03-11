@@ -421,7 +421,7 @@ mod tests {
     use super::*;
     use bounding::Aabb;
     use node::NodeType;
-    use rand::Rng;
+    use rand::RngExt;
     use std::collections::HashSet;
     use tree::Octree;
 
@@ -586,11 +586,11 @@ mod tests {
     }
 
     fn random_point() -> DummyCell<usize> {
-        let mut rnd = rand::thread_rng();
+        let mut rnd = rand::rng();
 
-        let x = rnd.gen_range(0..=RANGE);
-        let y = rnd.gen_range(0..=RANGE);
-        let z = rnd.gen_range(0..=RANGE);
+        let x = rnd.random_range(0..=RANGE);
+        let y = rnd.random_range(0..=RANGE);
+        let z = rnd.random_range(0..=RANGE);
         let position = TUVec3::new(x, y, z);
         DummyCell::new(position)
     }
@@ -647,12 +647,13 @@ mod tests {
 
         assert_eq!(tree.find(&TUVec3::new(13, 9, 13)), None);
 
-        assert!(tree
-            .insert(DummyVolume::new(Aabb::new_unchecked(
+        assert!(
+            tree.insert(DummyVolume::new(Aabb::new_unchecked(
                 TUVec3::new(20, 13, 13),
                 3,
             )))
-            .is_err());
+            .is_err()
+        );
 
         assert_eq!(tree.find(&TUVec3::new(19, 13, 13)), Some(ElementId(1)));
         assert_eq!(tree.find(&TUVec3::new(21, 13, 13)), Some(ElementId(1)));
