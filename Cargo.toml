@@ -9,12 +9,21 @@ license = "MIT"
 
 [features]
 default = ["std"]
-std = ["num/default", "bevy/default"]
+std = ["num/default"]
 bevy = ["dep:bevy"]
+examples = [
+    "bevy/bevy_camera",
+    "bevy/bevy_color",
+    "bevy/bevy_gizmos_render",
+    "bevy/bevy_render",
+    "bevy/bevy_pbr",
+    "bevy/default_app",
+    "bevy/default_platform",
+]
 
 [dependencies]
-num = { version = "0.4.3", default-features = false}
-bevy = { version = ">=0.9", optional = true }
+num = { version = "0.4.3", default-features = false }
+bevy = { version = ">=0.9", optional = true, default-features = false }
 heapless = "0.8.0"
 smallvec = { version = "1.13.2", features = ["const_generics"] }
 
@@ -26,27 +35,27 @@ wee_alloc = "0.4.5"
 [[bench]]
 name = "benchmark"
 harness = false
-required-features = ["bevy"]
+required-features = ["examples"]
 
 [[example]]
 name = "simple"
 path = "examples/simple.rs"
-required-features = ["bevy"]
+required-features = ["examples"]
 
 [[example]]
 name = "bevy_tree"
 path = "examples/bevy_tree.rs"
-required-features = ["bevy"]
+required-features = ["examples"]
 
 [[example]]
 name = "profile"
 path = "examples/profile.rs"
-required-features = ["bevy"]
+required-features = ["examples"]
 
 [[example]]
 name = "no_std"
 path = "examples/no_std.rs"
-required-features = ["bevy"]
+required-features = ["examples"]
 
 [package.metadata.docs.rs]
 all-features = true
