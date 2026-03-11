@@ -413,7 +413,7 @@ where
     }
 
     /// Returns an iterator over the nodes in the tree.
-    pub fn iter_nodes(&self) -> PoolIterator<Node<U>> {
+    pub fn iter_nodes(&self) -> PoolIterator<'_, Node<U>> {
         self.nodes.iter()
     }
 

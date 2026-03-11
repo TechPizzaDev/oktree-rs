@@ -45,8 +45,8 @@ fn draw_nodes(mut gizmos: Gizmos, tree: Res<Tree>) {
             Transform::from_translation(node.aabb.center().into()).with_scale(Vec3::splat(scale));
 
         match node.ntype {
-            NodeType::Empty => gizmos.cuboid(transform, Color::srgb(0.7, 0.7, 0.7)),
-            NodeType::Leaf(_) => gizmos.cuboid(transform, Color::srgb(0.9, 0.45, 0.0)),
+            NodeType::Empty => gizmos.cube(transform, Color::srgb(0.7, 0.7, 0.7)),
+            NodeType::Leaf(_) => gizmos.cube(transform, Color::srgb(0.9, 0.45, 0.0)),
             NodeType::Branch(_) => (),
         };
     }
@@ -73,7 +73,7 @@ fn spawn_points(
 ) {
     timer.timer.tick(time.delta());
 
-    if timer.timer.finished() {
+    if timer.timer.is_finished() {
         match *mode {
             Mode::Insert => {
                 let mut rnd = rand::thread_rng();

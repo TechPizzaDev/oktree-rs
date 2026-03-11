@@ -293,21 +293,21 @@ impl<T> Pool<T> {
     /// Returns a [`PoolIterator`], which iterates over an actual elements.
     ///
     /// Elements marked as deleted are skipped.
-    pub fn iter(&self) -> PoolIterator<T> {
+    pub fn iter(&self) -> PoolIterator<'_, T> {
         PoolIterator::new(self)
     }
 
     /// Returns a [`PoolIteratorMut`], which iterates over an actual elements.
     ///
     /// Elements marked as deleted are skipped.
-    pub fn iter_mut(&mut self) -> PoolIteratorMut<T> {
+    pub fn iter_mut(&mut self) -> PoolIteratorMut<'_, T> {
         PoolIteratorMut::new(self)
     }
 
     /// Returns a [`PoolIterator`], which iterates over an actual elements and element ids
     ///
     /// Elements marked as deleted are skipped.
-    pub fn iter_elements(&self) -> PoolElementIterator<T> {
+    pub fn iter_elements(&self) -> PoolElementIterator<'_, T> {
         PoolElementIterator::new(self)
     }
 }
@@ -440,7 +440,7 @@ impl<T> Pool<T> {
     pub fn get(&self, element: impl Into<ElementId>) -> Option<&T> {
         let element = Into::<ElementId>::into(element);
         self.vec.get(element.0 as usize).and_then(|item| {
-            if let PoolItem::Filled(ref item) = item {
+            if let PoolItem::Filled(item) = item {
                 Some(item)
             } else {
                 None
@@ -452,7 +452,7 @@ impl<T> Pool<T> {
     pub fn get_mut(&mut self, element: impl Into<ElementId>) -> Option<&mut T> {
         let element = Into::<ElementId>::into(element);
         self.vec.get_mut(element.0 as usize).and_then(|item| {
-            if let PoolItem::Filled(ref mut item) = item {
+            if let PoolItem::Filled(item) = item {
                 Some(item)
             } else {
                 None

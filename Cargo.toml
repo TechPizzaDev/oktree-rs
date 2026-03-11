@@ -4,7 +4,7 @@ description = "Fast octree implementation."
 version = "0.5.0"
 repository = "https://github.com/exor2008/oktree"
 keywords = ["graphics", "bevy", "voxel", "octree"]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 
 [features]
@@ -53,6 +53,6 @@ all-features = true
 
 [profile.profiler]
 inherits = "release"
-debug = true
-split-debuginfo = "full"
+debug = "full"
+split-debuginfo = "packed"
 opt-level = 3
