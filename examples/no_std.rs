@@ -1,6 +1,6 @@
 #![no_std]
 
-use bevy::math::{bounding::RayCast3d, Dir3, Ray3d, Vec3};
+use bevy_math::{bounding::RayCast3d, Dir3, Ray3d, Vec3};
 use oktree::prelude::*;
 
 extern crate alloc;

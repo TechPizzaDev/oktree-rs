@@ -64,7 +64,7 @@ use crate::{
     ElementId, NodeId, Volume,
 };
 use alloc::vec::Vec;
-use bevy::math::{
+use bevy_math::{
     bounding::{Aabb3d, BoundingSphere, IntersectsVolume, RayCast3d},
     Vec3, Vec3A,
 };
@@ -323,7 +323,7 @@ where
 #[cfg(test)]
 mod tests {
 
-    use bevy::math::{Dir3, Dir3A};
+    use bevy_math::{Dir3, Dir3A};
 
     use crate::Position;
 

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use bevy::math::{
+use bevy_math::{
     bounding::{Aabb3d, BoundingSphere, RayCast3d},
     Dir3A, Vec3A,
 };
