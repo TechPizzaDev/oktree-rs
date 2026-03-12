@@ -93,10 +93,11 @@ where
     ///
     /// assert_eq!(c1_id, ElementId(0))
     /// ```
-    pub fn insert(&mut self, elem: T) -> Result<ElementId, TreeError> {
-        let volume = elem.volume();
-        if self.nodes[self.root].aabb.overlaps(&volume) {
-            let element = self.elements.insert(elem);
+    pub fn insert(&mut self, element: T) -> Result<ElementId, TreeError> {
+        let aabb = self.nodes[self.root].aabb;
+        let volume = element.volume();
+        if aabb.overlaps(&volume) {
+            let element = self.elements.insert(element);
 
             let mut insertions: SmallVec<[Insertion<U>; 10]> = SmallVec::new();
             insertions.push(Insertion {
@@ -122,7 +123,7 @@ where
         } else {
             Err(TreeError::OutOfTreeBounds(format!(
                 "{volume} is outside of aabb: min: {} max: {}",
-                self.nodes[self.root].aabb.min, self.nodes[self.root].aabb.max,
+                aabb.min, aabb.max,
             )))
         }
     }
@@ -198,30 +199,31 @@ where
     ///
     /// assert!(tree.remove(c1_id).is_ok());
     /// ```
-    pub fn remove(&mut self, elem: ElementId) -> Result<(), TreeError> {
-        if let Some(element) = self.get_element(elem) {
-            let volume = element.volume();
-            if self.nodes[self.root].aabb.overlaps(&volume) {
+    pub fn remove(&mut self, element: ElementId) -> Result<(), TreeError> {
+        if let Some(elem) = self.get_element(element) {
+            let aabb = self.nodes[self.root].aabb;
+            let volume = elem.volume();
+            if aabb.overlaps(&volume) {
                 let mut removals: SmallVec<[Removal; 16]> = SmallVec::new();
                 removals.push(Removal {
                     parent: None,
                     node: self.root,
                 });
                 while let Some(removal) = removals.pop() {
-                    self._remove(elem, volume, removal, &mut removals);
+                    self._remove(element, volume, removal, &mut removals);
                 }
-                self.elements.tombstone(elem);
+                self.elements.tombstone(element);
                 Ok(())
             } else {
                 Err(TreeError::OutOfTreeBounds(format!(
                     "{volume} is outside of aabb: min: {} max: {}",
-                    self.nodes[self.root].aabb.min, self.nodes[self.root].aabb.max,
+                    aabb.min, aabb.max,
                 )))
             }
         } else {
             Err(TreeError::ElementNotFound(format!(
                 "Element with id: {} not found",
-                elem.0
+                element.0
             )))
         }
     }
