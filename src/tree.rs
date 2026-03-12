@@ -1,10 +1,10 @@
 //! [Octree] implementation
 
 use crate::{
+    ElementId, NodeId, TreeError, Volume,
     bounding::{Aabb, TUVec3, Unsigned},
     node::{Branch, Node, NodeType},
     pool::{Pool, PoolElementIterator, PoolIntoIterator, PoolItem, PoolIterator, PoolIteratorMut},
-    ElementId, NodeId, TreeError, Volume,
 };
 use alloc::format;
 use alloc::vec::Vec;
@@ -17,7 +17,7 @@ use smallvec::SmallVec;
 /// such as intersections, ray casting e.t.c
 /// All coordinates should be positive and integer ([`Unsigned`](num::Unsigned)),
 /// due to applied optimisations.
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Octree<U, T>
 where
     U: Unsigned,
@@ -406,6 +406,17 @@ where
     /// Returns an iterator over the elements in the tree.
     pub fn iter_elements(&self) -> PoolElementIterator<'_, T> {
         self.elements.iter_elements()
+    }
+}
+
+impl<U: Unsigned, T: Volume<U = U>> Default for Octree<U, T> {
+    fn default() -> Self {
+        Self {
+            aabb: None,
+            elements: Default::default(),
+            nodes: Default::default(),
+            root: Default::default(),
+        }
     }
 }
 
