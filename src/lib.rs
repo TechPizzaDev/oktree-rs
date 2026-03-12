@@ -224,10 +224,9 @@ pub mod node;
 pub mod pool;
 pub mod prelude;
 pub mod tree;
-use alloc::{borrow::Cow, boxed::Box, string::String, sync::Arc};
+use alloc::{borrow::Cow, boxed::Box, sync::Arc};
 use bounding::{TUVec3, Unsigned};
 use core::{
-    error::Error,
     fmt::{self},
     ops::Deref,
 };
@@ -360,59 +359,22 @@ impl fmt::Display for ElementId {
     }
 }
 
-/// Enum of all possible errors of the octree's operations.
 #[derive(Debug, PartialEq)]
-pub enum TreeError {
+pub enum InsertError {
     /// Object is out of bounds of tree's [`Aabb`].
-    OutOfTreeBounds(String),
-
-    /// Attempt to treat a [`Node`](node::Node) of different type
-    /// as a [`Branch`](node::NodeType::Branch).
-    NotBranch(String),
-
-    /// Attempt to treat a [`Node`](node::Node) of different type
-    /// as a [`Leaf`](node::NodeType::Leaf).
-    NotLeaf(String),
-
-    /// Only a [`Branch`](node::NodeType::Branch) [`Node`](node::Node) can be collapsed.
-    CollapseNonEmpty(String),
-
-    /// [`Aabb`] bounds are not positive.
-    NotPositive(String),
-
-    /// [`Aabb`] size should be the power of 2.
-    NotPower2(String),
+    OutOfTreeBounds(ElementId),
 
     /// [`ElementId`] is already occupied by an item.
-    AlreadyOccupied(String),
-
-    /// [`ElementId`] is not found in an [`tree`](tree::Octree)
-    ElementNotFound(String),
-
-    /// [`tree`](tree::Octree)'s garbage is corrupted.
-    CorruptGarbage(String),
+    Occupied(ElementId),
 }
 
-impl Error for TreeError {}
+#[derive(Debug, PartialEq)]
+pub enum RemoveError {
+    /// Object is out of bounds of tree's [`Aabb`].
+    OutOfTreeBounds,
 
-impl fmt::Display for TreeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            TreeError::OutOfTreeBounds(info) => write!(f, "Out of tree bounds. {info}"),
-            TreeError::NotBranch(info) => write!(f, "Node is not a Branch. {info}"),
-            TreeError::NotLeaf(info) => write!(f, "Node is not a Leaf. {info}"),
-            TreeError::CollapseNonEmpty(info) => write!(f, "Collapsing non empty branch. {info}"),
-            TreeError::NotPositive(info) => {
-                write!(f, "All AABB dimensions should be positive. {info}")
-            }
-            TreeError::NotPower2(info) => {
-                write!(f, "All AABB dimensions should be the power of 2. {info}")
-            }
-            TreeError::AlreadyOccupied(info) => write!(f, "Volume is already occupied. {info}"),
-            TreeError::ElementNotFound(info) => write!(f, "Element not found. {info}"),
-            TreeError::CorruptGarbage(info) => write!(f, "Tree's garbage is corrupted. {info}"),
-        }
-    }
+    /// [`ElementId`] is not found in an [`tree`](Octree)
+    ElementNotFound,
 }
 
 #[cfg(test)]

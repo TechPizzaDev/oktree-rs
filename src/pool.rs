@@ -1,9 +1,9 @@
 //! [`Pool`] implementation.
 
 use crate::{
+    ElementId, NodeId, Volume,
     bounding::{Aabb, Unsigned},
     node::{Node, NodeType},
-    ElementId, NodeId, TreeError, Volume,
 };
 use alloc::vec;
 use alloc::vec::{IntoIter, Vec};
@@ -16,6 +16,10 @@ use core::{
     slice,
 };
 use smallvec::SmallVec;
+
+/// [`tree`](crate::tree::Octree)'s garbage is corrupted.
+#[derive(Debug)]
+pub struct TombstoneError;
 
 /// [`PoolItem`] data structure that combines both the garbage flag
 /// and the actual item together for better cache locality.
@@ -238,13 +242,11 @@ impl<T> Pool<T> {
 
     /// Restores all the garbage elements back to real elements. Effectively
     /// this is a rollback of all the remove operations that happened
-    pub fn restore_garbage(&mut self) -> Result<(), TreeError> {
+    pub fn restore_garbage(&mut self) -> Result<(), TombstoneError> {
         let mut is_err = false;
         let mut carry_over = Vec::with_capacity(self.garbage.len());
         for idx in self.garbage.drain(..) {
-            let mut item = PoolItem::Empty;
-            mem::swap(&mut self.vec[idx], &mut item);
-            self.vec[idx] = match item {
+            self.vec[idx] = match mem::replace(&mut self.vec[idx], PoolItem::Empty) {
                 PoolItem::Filled(item) => {
                     is_err = true;
                     PoolItem::Filled(item)
@@ -258,11 +260,10 @@ impl<T> Pool<T> {
         }
         self.garbage.extend(carry_over);
 
-        match is_err {
-            true => Err(TreeError::CorruptGarbage(
-                "PollItem::Filled element was garbaged".into(),
-            )),
-            false => Ok(()),
+        if is_err {
+            Err(TombstoneError)
+        } else {
+            Ok(())
         }
     }
 
@@ -406,9 +407,7 @@ impl<T> Pool<T> {
         let element = Into::<ElementId>::into(element);
         let index: usize = element.into();
 
-        let mut item = PoolItem::Empty;
-        mem::swap(&mut self.vec[index], &mut item);
-        self.vec[index] = match item {
+        self.vec[index] = match mem::replace(&mut self.vec[index], PoolItem::Empty) {
             PoolItem::Filled(item) => {
                 self.garbage.push(index);
                 PoolItem::Tombstone(item)
@@ -423,23 +422,14 @@ impl<T> Pool<T> {
         let element = Into::<ElementId>::into(element);
         let index: usize = element.into();
 
-        let mut ret = None;
-
-        let mut item = PoolItem::Empty;
-        mem::swap(&mut self.vec[index], &mut item);
-        self.vec[index] = match item {
+        match mem::replace(&mut self.vec[index], PoolItem::Empty) {
             PoolItem::Filled(item) => {
-                ret = Some(item);
                 self.garbage.push(index);
-                PoolItem::Empty
+                Some(item)
             }
-            PoolItem::Tombstone(item) => {
-                ret = Some(item);
-                PoolItem::Empty
-            }
-            PoolItem::Empty => PoolItem::Empty,
-        };
-        ret
+            PoolItem::Tombstone(item) => Some(item),
+            PoolItem::Empty => None,
+        }
     }
 
     #[inline(always)]

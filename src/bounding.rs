@@ -2,10 +2,10 @@
 //!
 //! [`TUVec3`], [`BVec3`], [`Aabb`]
 
-use crate::{Position, TreeError};
+use crate::Position;
 use core::fmt::{self, Debug, Display};
 use core::ops::{Add, AddAssign, BitAnd, Div, DivAssign, Mul, MulAssign, Shr, Sub, SubAssign};
-use num::{cast, Integer, NumCast, Saturating, Unsigned as NumUnsigned};
+use num::{Integer, NumCast, Saturating, Unsigned as NumUnsigned, cast};
 
 pub trait Unsigned:
     Integer
@@ -212,6 +212,15 @@ impl BVec3 {
     }
 }
 
+#[derive(Debug)]
+pub enum AabbError {
+    /// [`Aabb`] bounds are not positive.
+    NotPositive,
+
+    /// [`Aabb`] size should be the power of 2.
+    NotPower2,
+}
+
 /// Axis Aligned Bounding Box
 ///
 /// Resulting Aabb should be positive and it's dimensions should be the power of 2.
@@ -259,13 +268,11 @@ impl<U: Unsigned> Aabb<U> {
     ///
     /// Checks that it's dimensions are positive
     /// and are powers of 2.
-    pub fn new(center: TUVec3<U>, half_size: U) -> Result<Self, TreeError> {
+    pub fn new(center: TUVec3<U>, half_size: U) -> Result<Self, AabbError> {
         if !center.is_positive_aabb(half_size) {
-            Err(TreeError::NotPositive(
-                "Center: {center}, half size: {half_size}".into(),
-            ))
+            Err(AabbError::NotPositive)
         } else if !is_power2(half_size) {
-            Err(TreeError::NotPower2("half size: {half_size}".into()))
+            Err(AabbError::NotPower2)
         } else {
             Ok(Self::new_unchecked(center, half_size))
         }
@@ -387,7 +394,7 @@ pub fn is_power2<U: Unsigned>(mut half_size: U) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_power2, Aabb, TUVec3};
+    use super::{Aabb, TUVec3, is_power2};
 
     #[test]
     fn test_aabb_contains() {

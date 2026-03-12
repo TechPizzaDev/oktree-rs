@@ -64,7 +64,7 @@ impl<'a, U: Unsigned, T: Volume<U = U>> Entry<'a, U, T> {
     /// Ensures a value is in the entry by inserting the default if empty, and returns
     /// a mutable reference to the value in the entry.
     #[inline]
-    pub fn or_try_insert(self, default: T) -> Result<OccupiedEntry<'a, U, T>, TreeError> {
+    pub fn or_try_insert(self, default: T) -> Result<OccupiedEntry<'a, U, T>, InsertError> {
         match self {
             Self::Occupied(entry) => Ok(entry),
             Self::Vacant(entry) => entry.try_insert(default),
@@ -87,7 +87,7 @@ impl<'a, U: Unsigned, T: Volume<U = U>> Entry<'a, U, T> {
     pub fn or_try_insert_with<F: FnOnce() -> T>(
         self,
         default: F,
-    ) -> Result<OccupiedEntry<'a, U, T>, TreeError> {
+    ) -> Result<OccupiedEntry<'a, U, T>, InsertError> {
         match self {
             Self::Occupied(entry) => Ok(entry),
             Self::Vacant(entry) => entry.try_insert(default()),
@@ -124,7 +124,7 @@ impl<'a, U: Unsigned, T: Volume<U = U>> Entry<'a, U, T> {
     pub fn or_try_insert_with_key<F: FnOnce(&TUVec3<U>) -> T>(
         self,
         default: F,
-    ) -> Result<OccupiedEntry<'a, U, T>, TreeError> {
+    ) -> Result<OccupiedEntry<'a, U, T>, InsertError> {
         match self {
             Self::Occupied(entry) => Ok(entry),
             Self::Vacant(entry) => {
@@ -285,7 +285,7 @@ impl<'a, U: Unsigned, T: Volume<U = U>> VacantEntry<'a, U, T> {
     /// and returns a mutable reference to it.
     #[inline]
     pub fn insert(self, value: T) -> OccupiedEntry<'a, U, T> {
-        let element = self.base.insert(value).unwrap();
+        let element = self.base.insert(value).ok().unwrap();
         OccupiedEntry {
             base: self.base,
             key: self.key,
@@ -296,7 +296,7 @@ impl<'a, U: Unsigned, T: Volume<U = U>> VacantEntry<'a, U, T> {
     /// Sets the value of the entry with the `VacantEntry`'s key,
     /// and returns a mutable reference to it.
     #[inline]
-    pub fn try_insert(self, value: T) -> Result<OccupiedEntry<'a, U, T>, TreeError> {
+    pub fn try_insert(self, value: T) -> Result<OccupiedEntry<'a, U, T>, InsertError> {
         let element = self.base.insert(value)?;
         Ok(OccupiedEntry {
             base: self.base,

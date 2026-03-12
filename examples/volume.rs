@@ -4,17 +4,17 @@ use bevy_math::{
 };
 use oktree::prelude::*;
 
-fn main() -> Result<(), TreeError> {
+fn main() {
     let aabb = Aabb::new(TUVec3::splat(8), 8u8);
-    let mut tree = Octree::from_aabb_with_capacity(aabb?, 10);
+    let mut tree = Octree::from_aabb_with_capacity(aabb.unwrap(), 10);
 
     let v1_volume = Aabb::new(TUVec3::new(9, 5, 4), 4).unwrap();
     let v1 = DummyVolume::new(v1_volume);
-    let v1_id = tree.insert(v1)?;
+    let v1_id = tree.insert(v1).unwrap();
 
     let v2_volume = Aabb::new(TUVec3::new(14, 14, 4), 4).unwrap();
     let v2 = DummyVolume::new(v2_volume);
-    let v2_id = tree.insert(v2)?;
+    let v2_id = tree.insert(v2).unwrap();
 
     let v3_volume = Aabb::new(TUVec3::new(7, 5, 4), 4).unwrap();
     let v3 = DummyVolume::new(v3_volume);
@@ -51,7 +51,7 @@ fn main() -> Result<(), TreeError> {
 
     let v1_volume = Aabb::new(TUVec3::new(9, 5, 4), 4).unwrap();
     let v1 = DummyVolume::new(v1_volume);
-    let v1_id = tree.insert(v1)?;
+    let v1_id = tree.insert(v1).unwrap();
 
     // Aabb intersection
     let aabb = Aabb3d::new(Vec3::splat(8.0), Vec3::splat(8.0));
@@ -60,8 +60,6 @@ fn main() -> Result<(), TreeError> {
     // Sphere intersection
     let sphere = BoundingSphere::new(Vec3::new(15.0, 15.0, 0.0), 5.0);
     assert_eq!(tree.intersect(&sphere), vec![v2_id]);
-
-    Ok(())
 }
 
 struct DummyVolume<U: Unsigned> {

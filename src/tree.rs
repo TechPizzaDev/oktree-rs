@@ -1,12 +1,14 @@
 //! [Octree] implementation
 
 use crate::{
-    ElementId, NodeId, TreeError, Volume,
+    ElementId, InsertError, NodeId, RemoveError, Volume,
     bounding::{Aabb, TUVec3, Unsigned},
     node::{Branch, Node, NodeType},
-    pool::{Pool, PoolElementIterator, PoolIntoIterator, PoolItem, PoolIterator, PoolIteratorMut},
+    pool::{
+        Pool, PoolElementIterator, PoolIntoIterator, PoolItem, PoolIterator, PoolIteratorMut,
+        TombstoneError,
+    },
 };
-use alloc::format;
 use alloc::vec::Vec;
 use core::{fmt, iter};
 use smallvec::SmallVec;
@@ -93,12 +95,10 @@ where
     ///
     /// assert_eq!(c1_id, ElementId(0))
     /// ```
-    pub fn insert(&mut self, element: T) -> Result<ElementId, TreeError> {
-        let aabb = self.nodes[self.root].aabb;
+    pub fn insert(&mut self, element: T) -> Result<ElementId, InsertError> {
         let volume = element.volume();
-        if aabb.overlaps(&volume) {
-            let element = self.elements.insert(element);
-
+        let element = self.elements.insert(element);
+        if self.nodes[self.root].aabb.overlaps(&volume) {
             let mut insertions: SmallVec<[Insertion<U>; 10]> = SmallVec::new();
             insertions.push(Insertion {
                 element,
@@ -113,18 +113,13 @@ where
 
             if !was_inserted {
                 self.elements.tombstone(element);
-                return Err(TreeError::AlreadyOccupied(format!(
-                    "Elements for volume: {} already exists",
-                    volume
-                )));
+                return Err(InsertError::Occupied(element));
             }
 
             Ok(element)
         } else {
-            Err(TreeError::OutOfTreeBounds(format!(
-                "{volume} is outside of aabb: min: {} max: {}",
-                aabb.min, aabb.max,
-            )))
+            self.elements.tombstone(element);
+            Err(InsertError::OutOfTreeBounds(element))
         }
     }
 
@@ -199,11 +194,10 @@ where
     ///
     /// assert!(tree.remove(c1_id).is_ok());
     /// ```
-    pub fn remove(&mut self, element: ElementId) -> Result<(), TreeError> {
+    pub fn remove(&mut self, element: ElementId) -> Result<(), RemoveError> {
         if let Some(elem) = self.get_element(element) {
-            let aabb = self.nodes[self.root].aabb;
             let volume = elem.volume();
-            if aabb.overlaps(&volume) {
+            if self.nodes[self.root].aabb.overlaps(&volume) {
                 let mut removals: SmallVec<[Removal; 16]> = SmallVec::new();
                 removals.push(Removal {
                     parent: None,
@@ -215,16 +209,10 @@ where
                 self.elements.tombstone(element);
                 Ok(())
             } else {
-                Err(TreeError::OutOfTreeBounds(format!(
-                    "{volume} is outside of aabb: min: {} max: {}",
-                    aabb.min, aabb.max,
-                )))
+                Err(RemoveError::OutOfTreeBounds)
             }
         } else {
-            Err(TreeError::ElementNotFound(format!(
-                "Element with id: {} not found",
-                element.0
-            )))
+            Err(RemoveError::ElementNotFound)
         }
     }
 
@@ -282,7 +270,7 @@ where
 
     /// Restores all the garbage elements back to real elements. Effectively
     /// this is a rollback of all the remove operations that happened
-    pub fn restore_garbage(&mut self) -> Result<(), TreeError> {
+    pub fn restore_garbage(&mut self) -> Result<(), TombstoneError> {
         self.elements.restore_garbage()?;
         self.nodes.restore_garbage()?;
         Ok(())
