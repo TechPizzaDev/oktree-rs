@@ -128,6 +128,7 @@ impl Pool<SmallVec<[NodeId; 1]>> {
 impl<U: Unsigned> Index<NodeId> for Pool<Node<U>> {
     type Output = Node<U>;
 
+    #[inline]
     fn index(&self, index: NodeId) -> &Self::Output {
         debug_assert!(!self.is_garbage(index), "Indexing garbage node: {index}");
         self.get_unchecked(index)
@@ -141,6 +142,7 @@ impl<U: Unsigned> Index<NodeId> for Pool<Node<U>> {
 /// // let mut node = &mut tree.nodes[ElementId(42)]; // Error
 /// ```
 impl<U: Unsigned> IndexMut<NodeId> for Pool<Node<U>> {
+    #[inline]
     fn index_mut(&mut self, index: NodeId) -> &mut Self::Output {
         debug_assert!(
             !self.is_garbage(index),
@@ -159,6 +161,7 @@ impl<U: Unsigned> IndexMut<NodeId> for Pool<Node<U>> {
 impl<T: Volume> Index<ElementId> for Pool<T> {
     type Output = T;
 
+    #[inline]
     fn index(&self, index: ElementId) -> &Self::Output {
         debug_assert!(
             !self.is_garbage(index),
@@ -175,6 +178,7 @@ impl<T: Volume> Index<ElementId> for Pool<T> {
 /// // let mut element = &mut tree.element[NodeId(42)]; // Error
 /// ```
 impl<T: Volume> IndexMut<ElementId> for Pool<T> {
+    #[inline]
     fn index_mut(&mut self, index: ElementId) -> &mut Self::Output {
         debug_assert!(
             !self.is_garbage(index),
@@ -193,6 +197,7 @@ impl<T: Volume> IndexMut<ElementId> for Pool<T> {
 impl Index<ElementId> for Pool<NodeId> {
     type Output = NodeId;
 
+    #[inline]
     fn index(&self, index: ElementId) -> &Self::Output {
         debug_assert!(
             !self.is_garbage(index),
@@ -209,6 +214,7 @@ impl Index<ElementId> for Pool<NodeId> {
 /// // let mut node_id = &mut tree.map[NodeId(42)]; // Error
 /// ```
 impl IndexMut<ElementId> for Pool<NodeId> {
+    #[inline]
     fn index_mut(&mut self, index: ElementId) -> &mut Self::Output {
         debug_assert!(
             !self.is_garbage(index),
