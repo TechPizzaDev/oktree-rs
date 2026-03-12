@@ -378,10 +378,10 @@ mod tests {
         let mut tree = Octree::from_aabb(aabb.unwrap());
 
         let c1 = DummyCell::new(TUVec3::new(3, 1, 1));
-        assert_eq!(tree.insert(c1), Ok(ElementId(0)));
+        assert_eq!(tree.insert(c1), Ok(ElementId::new(0)));
 
         let c2 = DummyCell::new(TUVec3::new(1, 5, 1));
-        assert_eq!(tree.insert(c2), Ok(ElementId(1)));
+        assert_eq!(tree.insert(c2), Ok(ElementId::new(1)));
 
         // hit 2nd
         let ray = RayCast3d::new(Vec3A::new(1.5, 1.5, 1.5), Dir3A::Y, 10.0);
@@ -460,7 +460,7 @@ mod tests {
         let mut tree = Octree::from_aabb(aabb);
 
         let c1 = DummyCell::new(TUVec3::new(3, 1, 1));
-        assert_eq!(tree.insert(c1), Ok(ElementId(0)));
+        assert_eq!(tree.insert(c1), Ok(ElementId::new(0)));
 
         let box1 = Aabb3d::new(Vec3::splat(8.0), Vec3::splat(8.0));
         assert!(tree.intersects(&box1));
@@ -499,23 +499,23 @@ mod tests {
         let mut tree = Octree::from_aabb(aabb);
 
         let c1 = DummyCell::new(TUVec3::new(3, 1, 1));
-        assert_eq!(tree.insert(c1), Ok(ElementId(0)));
+        assert_eq!(tree.insert(c1), Ok(ElementId::new(0)));
 
         let c2 = DummyCell::new(TUVec3::new(1, 5, 1));
-        assert_eq!(tree.insert(c2), Ok(ElementId(1)));
+        assert_eq!(tree.insert(c2), Ok(ElementId::new(1)));
 
         let c3 = DummyCell::new(TUVec3::new(1, 1, 7));
-        assert_eq!(tree.insert(c3), Ok(ElementId(2)));
+        assert_eq!(tree.insert(c3), Ok(ElementId::new(2)));
 
         let box1 = Aabb3d::new(Vec3::new(0.0, 0.0, 0.0), Vec3::splat(10.0));
         let mut test = tree.intersect(&box1);
         test.sort();
-        assert_eq!(test, vec![ElementId(0), ElementId(1), ElementId(2)]);
+        assert_eq!(test, vec![ElementId::new(0), ElementId::new(1), ElementId::new(2)]);
 
         let box2 = Aabb3d::new(Vec3::new(0.0, 0.0, 0.0), Vec3::splat(5.0));
         let mut test = tree.intersect(&box2);
         test.sort();
-        assert_eq!(test, vec![ElementId(0), ElementId(1)]);
+        assert_eq!(test, vec![ElementId::new(0), ElementId::new(1)]);
 
         let box3 = Aabb3d::new(Vec3::new(10.0, 0.0, 10.0), Vec3::splat(5.0));
         let mut test = tree.intersect(&box3);
@@ -525,12 +525,12 @@ mod tests {
         let sphere1 = BoundingSphere::new(Vec3::new(0.0, 0.0, 0.0), 10.0);
         let mut test = tree.intersect(&sphere1);
         test.sort();
-        assert_eq!(test, vec![ElementId(0), ElementId(1), ElementId(2)]);
+        assert_eq!(test, vec![ElementId::new(0), ElementId::new(1), ElementId::new(2)]);
 
         let sphere2 = BoundingSphere::new(Vec3::new(0.0, 0.0, 0.0), 6.0);
         let mut test = tree.intersect(&sphere2);
         test.sort();
-        assert_eq!(test, vec![ElementId(0), ElementId(1)]);
+        assert_eq!(test, vec![ElementId::new(0), ElementId::new(1)]);
 
         let sphere3 = BoundingSphere::new(Vec3::new(10.0, 0.0, 10.0), 5.0);
         let mut test = tree.intersect(&sphere3);
@@ -567,12 +567,12 @@ mod tests {
         assert_eq!(
             tree.ray_cast(&ray),
             HitResult {
-                element: Some(ElementId(0)),
+                element: Some(ElementId::new(0)),
                 distance: 6.0
             }
         );
 
-        assert_eq!(tree.remove(ElementId(0)), Ok(()));
+        assert_eq!(tree.remove(ElementId::new(0)), Ok(()));
 
         // Miss!
         assert_eq!(

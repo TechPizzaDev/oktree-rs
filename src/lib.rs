@@ -231,6 +231,7 @@ use core::{
     ops::Deref,
 };
 use prelude::Aabb;
+use std::num::NonZeroU32;
 
 extern crate alloc;
 /// Implement to represent your object as a point in a [`tree`](tree::Octree)
@@ -301,24 +302,43 @@ where
 
 /// Index [`tree.nodes`](pool::Pool) with it.
 ///
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct NodeId(pub u32);
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct NodeId(NonZeroU32);
+
+impl NodeId {
+    pub const ZERO: Self = Self::new(0);
+
+    #[inline]
+    pub const fn new(value: u32) -> Self {
+        NodeId(NonZeroU32::new(value + 1).unwrap())
+    }
+}
+
+impl Default for NodeId {
+    #[inline]
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
 
 impl From<NodeId> for ElementId {
+    #[inline]
     fn from(value: NodeId) -> Self {
         ElementId(value.0)
     }
 }
 
 impl From<NodeId> for usize {
+    #[inline]
     fn from(value: NodeId) -> Self {
-        value.0 as usize
+        value.0.get() as usize - 1
     }
 }
 
 impl From<usize> for NodeId {
+    #[inline]
     fn from(value: usize) -> Self {
-        NodeId(value as u32)
+        NodeId::new(value as u32)
     }
 }
 
@@ -338,18 +358,36 @@ impl fmt::Display for NodeId {
 /// tree.insert(TUVec3u16::new(5, 5, 5)).unwrap();
 /// let element: &TUVec3u16 = tree.get_element(ElementId(0)).unwrap();
 /// ```
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct ElementId(pub u32);
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct ElementId(NonZeroU32);
+
+impl ElementId {
+    pub const ZERO: Self = Self::new(0);
+
+    #[inline]
+    pub const fn new(value: u32) -> Self {
+        ElementId(NonZeroU32::new(value + 1).unwrap())
+    }
+}
+
+impl Default for ElementId {
+    #[inline]
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
 
 impl From<ElementId> for usize {
+    #[inline]
     fn from(value: ElementId) -> Self {
-        value.0 as usize
+        value.0.get() as usize - 1
     }
 }
 
 impl From<usize> for ElementId {
+    #[inline]
     fn from(value: usize) -> Self {
-        ElementId(value as u32)
+        ElementId::new(value as u32)
     }
 }
 
@@ -447,7 +485,7 @@ mod tests {
         assert_eq!(tree.nodes[0.into()].parent, None);
 
         let c1 = DummyCell::new(TUVec3::new(1u8, 1, 1));
-        assert_eq!(tree.insert(c1), Ok(ElementId(0)));
+        assert_eq!(tree.insert(c1), Ok(ElementId::new(0)));
 
         assert_eq!(tree.elements.len(), 1);
         assert_eq!(tree.elements.garbage_len(), 0);
@@ -459,7 +497,7 @@ mod tests {
         assert_eq!(tree.nodes[0.into()].parent, None);
 
         let c2 = DummyCell::new(TUVec3::new(7, 7, 7));
-        assert_eq!(tree.insert(c2), Ok(ElementId(1)));
+        assert_eq!(tree.insert(c2), Ok(ElementId::new(1)));
 
         assert_eq!(tree.elements.len(), 2);
         assert_eq!(tree.elements.garbage_len(), 0);
@@ -483,16 +521,16 @@ mod tests {
         let mut tree = Octree::from_aabb(Aabb::new_unchecked(TUVec3::new(8u16, 8, 8), 8));
 
         let c1 = DummyCell::new(TUVec3::new(1, 1, 1));
-        assert_eq!(tree.insert(c1), Ok(ElementId(0)));
+        assert_eq!(tree.insert(c1), Ok(ElementId::new(0)));
         let c2 = DummyCell::new(TUVec3::new(2, 2, 2));
-        assert_eq!(tree.insert(c2), Ok(ElementId(1)));
+        assert_eq!(tree.insert(c2), Ok(ElementId::new(1)));
         assert_eq!(tree.nodes[17.into()].ntype, NodeType::Leaf(0.into()));
 
         assert_eq!(tree.nodes.len(), 25);
 
         let c2r = DummyCell::new(TUVec3::new(1, 1, 1));
         assert!(tree.insert(c2r).is_err());
-        assert_eq!(tree.find(&TUVec3::new(1, 1, 1)), Some(ElementId(0)));
+        assert_eq!(tree.find(&TUVec3::new(1, 1, 1)), Some(ElementId::new(0)));
 
         assert_eq!(tree.nodes.len(), 25);
         assert_eq!(tree.elements.len(), 2);
@@ -515,19 +553,19 @@ mod tests {
         let mut tree = Octree::from_aabb(Aabb::new_unchecked(TUVec3::new(4u8, 4, 4), 4));
 
         let c1 = DummyCell::new(TUVec3::new(1, 1, 1));
-        assert_eq!(tree.insert(c1), Ok(ElementId(0)));
+        assert_eq!(tree.insert(c1), Ok(ElementId::new(0)));
 
         let c2 = DummyCell::new(TUVec3::new(2, 2, 1));
-        assert_eq!(tree.insert(c2), Ok(ElementId(1)));
+        assert_eq!(tree.insert(c2), Ok(ElementId::new(1)));
 
         let c3 = DummyCell::new(TUVec3::new(6, 6, 1));
-        assert_eq!(tree.insert(c3), Ok(ElementId(2)));
+        assert_eq!(tree.insert(c3), Ok(ElementId::new(2)));
 
         let c4 = DummyCell::new(TUVec3::new(7, 7, 1));
-        assert_eq!(tree.insert(c4), Ok(ElementId(3)));
+        assert_eq!(tree.insert(c4), Ok(ElementId::new(3)));
 
         let c5 = DummyCell::new(TUVec3::new(6, 7, 1));
-        assert_eq!(tree.insert(c5), Ok(ElementId(4)));
+        assert_eq!(tree.insert(c5), Ok(ElementId::new(4)));
 
         assert_eq!(tree.remove(0.into()), Ok(()));
 
@@ -572,7 +610,7 @@ mod tests {
         assert!(tree.elements.len() > (RANGE as f32 * 0.98) as usize);
 
         for element in 0..tree.len() {
-            let e = ElementId(element as u32);
+            let e = ElementId::from(element);
             let pos = tree.elements[e].position;
             assert_eq!(tree.find(&pos), Some(e));
             assert_eq!(tree.remove(element.into()), Ok(()));
@@ -599,12 +637,12 @@ mod tests {
         .unwrap();
 
         assert_eq!(tree.find(&TUVec3::new(9, 13, 13)), None);
-        assert_eq!(tree.find(&TUVec3::new(10, 13, 13)), Some(ElementId(0)));
-        assert_eq!(tree.find(&TUVec3::new(13, 13, 13)), Some(ElementId(0)));
-        assert_eq!(tree.find(&TUVec3::new(15, 13, 13)), Some(ElementId(0)));
-        assert_eq!(tree.find(&TUVec3::new(16, 13, 13)), Some(ElementId(1)));
-        assert_eq!(tree.find(&TUVec3::new(19, 13, 13)), Some(ElementId(1)));
-        assert_eq!(tree.find(&TUVec3::new(21, 13, 13)), Some(ElementId(1)));
+        assert_eq!(tree.find(&TUVec3::new(10, 13, 13)), Some(ElementId::new(0)));
+        assert_eq!(tree.find(&TUVec3::new(13, 13, 13)), Some(ElementId::new(0)));
+        assert_eq!(tree.find(&TUVec3::new(15, 13, 13)), Some(ElementId::new(0)));
+        assert_eq!(tree.find(&TUVec3::new(16, 13, 13)), Some(ElementId::new(1)));
+        assert_eq!(tree.find(&TUVec3::new(19, 13, 13)), Some(ElementId::new(1)));
+        assert_eq!(tree.find(&TUVec3::new(21, 13, 13)), Some(ElementId::new(1)));
         assert_eq!(tree.find(&TUVec3::new(22, 13, 13)), None);
 
         assert_eq!(tree.find(&TUVec3::new(13, 9, 13)), None);
@@ -617,8 +655,8 @@ mod tests {
             .is_err()
         );
 
-        assert_eq!(tree.find(&TUVec3::new(19, 13, 13)), Some(ElementId(1)));
-        assert_eq!(tree.find(&TUVec3::new(21, 13, 13)), Some(ElementId(1)));
+        assert_eq!(tree.find(&TUVec3::new(19, 13, 13)), Some(ElementId::new(1)));
+        assert_eq!(tree.find(&TUVec3::new(21, 13, 13)), Some(ElementId::new(1)));
         assert_eq!(tree.find(&TUVec3::new(22, 13, 13)), None);
 
         let mut hits = HashSet::new();
@@ -626,7 +664,7 @@ mod tests {
             |aabb| {
                 Aabb::from_min_max(TUVec3::new(10, 13, 13), TUVec3::new(24, 14, 14)).overlaps(aabb)
             },
-            |e| {
+            |_id, e| {
                 hits.insert(e.clone());
             },
         );
@@ -637,7 +675,7 @@ mod tests {
             |aabb| {
                 Aabb::from_min_max(TUVec3::new(10, 13, 13), TUVec3::new(20, 14, 14)).overlaps(aabb)
             },
-            |e| {
+            |_id, e| {
                 hits.insert(e.clone());
             },
         );
@@ -651,7 +689,7 @@ mod tests {
         for i in 0..16u32 {
             assert_eq!(
                 tree.insert(DummyCell::new(TUVec3::splat(i))),
-                Ok(ElementId(i))
+                Ok(ElementId::new(i))
             );
             assert_eq!(tree.elements.len(), (i + 1) as usize);
             assert_eq!(tree.elements.vec.len(), (i + 1) as usize);
@@ -664,7 +702,7 @@ mod tests {
                 TUVec3::splat(i)
             );
 
-            assert_eq!(tree.remove(ElementId(i)), Ok(()));
+            assert_eq!(tree.remove(ElementId::new(i)), Ok(()));
             assert_eq!(tree.elements.len(), (15 - i) as usize);
             assert_eq!(tree.elements.vec.len(), 16);
             assert_eq!(tree.elements.garbage_len(), (i + 1) as usize);
@@ -673,7 +711,7 @@ mod tests {
         for i in 0..16u32 {
             assert_eq!(
                 tree.insert(DummyCell::new(TUVec3::splat(i))),
-                Ok(ElementId(15 - i))
+                Ok(ElementId::new(15 - i))
             );
             assert_eq!(tree.elements.len(), (i + 1) as usize);
             assert_eq!(tree.elements.vec.len(), 16);
@@ -686,7 +724,7 @@ mod tests {
                 TUVec3::splat(15 - i)
             );
 
-            assert_eq!(tree.remove(ElementId(i)), Ok(()));
+            assert_eq!(tree.remove(ElementId::new(i)), Ok(()));
             assert_eq!(tree.elements.len(), (15 - i) as usize);
             assert_eq!(tree.elements.vec.len(), 16);
             assert_eq!(tree.elements.garbage_len(), (i + 1) as usize);
@@ -728,15 +766,15 @@ mod tests {
         let mut tree = Octree::from_aabb(Aabb::new_unchecked(TUVec3::splat(16), 16));
         assert_eq!(
             tree.insert(DummyCell::new(TUVec3::splat(1u8))),
-            Ok(ElementId(0))
+            Ok(ElementId::new(0))
         );
         assert_eq!(
             tree.insert(DummyCell::new(TUVec3::splat(2u8))),
-            Ok(ElementId(1))
+            Ok(ElementId::new(1))
         );
         assert_eq!(
             tree.insert(DummyCell::new(TUVec3::splat(3u8))),
-            Ok(ElementId(2))
+            Ok(ElementId::new(2))
         );
 
         assert_eq!(tree.remove(1.into()), Ok(()));
@@ -756,11 +794,11 @@ mod tests {
 
         let v1_volume = Aabb::new(TUVec3::new(9, 5, 4), 4).unwrap();
         let v1 = DummyVolume::new(v1_volume);
-        assert_eq!(tree.insert(v1), Ok(ElementId(0)));
+        assert_eq!(tree.insert(v1), Ok(ElementId::new(0)));
 
         let v2_volume = Aabb::new(TUVec3::new(14, 14, 4), 4).unwrap();
         let v2 = DummyVolume::new(v2_volume);
-        assert_eq!(tree.insert(v2), Ok(ElementId(1)));
+        assert_eq!(tree.insert(v2), Ok(ElementId::new(1)));
 
         let v3_volume = Aabb::new(TUVec3::new(7, 5, 4), 4).unwrap();
         let v3 = DummyVolume::new(v3_volume);

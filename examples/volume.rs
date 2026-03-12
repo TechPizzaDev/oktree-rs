@@ -33,12 +33,12 @@ fn main() {
     assert_eq!(
         tree.ray_cast(&ray),
         HitResult {
-            element: Some(ElementId(0)),
+            element: Some(ElementId::new(0)),
             distance: 6.0
         }
     );
 
-    assert_eq!(tree.remove(ElementId(0)), Ok(()));
+    assert_eq!(tree.remove(ElementId::new(0)), Ok(()));
 
     // Miss!
     assert_eq!(

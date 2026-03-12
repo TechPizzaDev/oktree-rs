@@ -435,7 +435,7 @@ impl<T> Pool<T> {
     #[inline(always)]
     pub fn get(&self, element: impl Into<ElementId>) -> Option<&T> {
         let element = Into::<ElementId>::into(element);
-        self.vec.get(element.0 as usize).and_then(|item| {
+        self.vec.get(usize::from(element)).and_then(|item| {
             if let PoolItem::Filled(item) = item {
                 Some(item)
             } else {
@@ -447,7 +447,7 @@ impl<T> Pool<T> {
     #[inline(always)]
     pub fn get_mut(&mut self, element: impl Into<ElementId>) -> Option<&mut T> {
         let element = Into::<ElementId>::into(element);
-        self.vec.get_mut(element.0 as usize).and_then(|item| {
+        self.vec.get_mut(usize::from(element)).and_then(|item| {
             if let PoolItem::Filled(item) = item {
                 Some(item)
             } else {
@@ -459,7 +459,7 @@ impl<T> Pool<T> {
     #[inline(always)]
     pub fn get_unchecked(&self, element: impl Into<ElementId>) -> &T {
         let element = Into::<ElementId>::into(element);
-        if let PoolItem::Filled(ref item) = self.vec[element.0 as usize] {
+        if let PoolItem::Filled(ref item) = self.vec[usize::from(element)] {
             item
         } else {
             unreachable!("Accessing garbaged element: {element}")
@@ -469,7 +469,7 @@ impl<T> Pool<T> {
     #[inline(always)]
     pub fn get_mut_unchecked(&mut self, element: impl Into<ElementId>) -> &mut T {
         let element = Into::<ElementId>::into(element);
-        if let PoolItem::Filled(ref mut item) = self.vec[element.0 as usize] {
+        if let PoolItem::Filled(ref mut item) = self.vec[usize::from(element)] {
             item
         } else {
             unreachable!("Accessing garbaged element: {element}")
@@ -664,7 +664,7 @@ impl<'pool, T> Iterator for PoolElementIterator<'pool, T> {
             let next = self.inner.next()?;
             match next.1 {
                 PoolItem::Filled(item) => {
-                    return Some((ElementId(next.0 as u32), item));
+                    return Some((ElementId::from(next.0), item));
                 }
                 PoolItem::Empty => continue,
                 PoolItem::Tombstone(_) => continue,
@@ -687,7 +687,7 @@ impl<T> DoubleEndedIterator for PoolElementIterator<'_, T> {
             let next = self.inner.next_back()?;
             match next.1 {
                 PoolItem::Filled(item) => {
-                    return Some((ElementId(next.0 as u32), item));
+                    return Some((ElementId::from(next.0), item));
                 }
                 PoolItem::Empty => continue,
                 PoolItem::Tombstone(_) => continue,
@@ -809,25 +809,25 @@ mod tests {
     fn test_remove() {
         let mut pool = Pool::<TUVec3u8>::with_capacity(16);
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId(i as u32));
+            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
             assert_eq!(pool.len(), (i + 1) as usize);
             assert_eq!(pool.garbage_len(), 0_usize);
         }
 
         for i in 0..8 {
-            pool.tombstone(NodeId(i));
+            pool.tombstone(NodeId::new(i));
             assert_eq!(pool.len(), (15 - i) as usize);
             assert_eq!(pool.garbage_len(), (i + 1) as usize);
         }
 
         for i in 0..8 {
-            pool.remove(NodeId(i));
+            pool.remove(NodeId::new(i));
             assert_eq!(pool.len(), 8_usize);
             assert_eq!(pool.garbage_len(), 8_usize);
         }
 
         for i in 8..16 {
-            pool.remove(NodeId(i));
+            pool.remove(NodeId::new(i));
             assert_eq!(pool.len(), (15 - i) as usize);
             assert_eq!(pool.garbage_len(), (i + 1) as usize);
         }
@@ -838,15 +838,15 @@ mod tests {
         let mut pool = Pool::<TUVec3u8>::with_capacity(16);
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId(i as u32));
+            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
         }
 
         for i in 0..4 {
-            pool.tombstone(NodeId(i));
+            pool.tombstone(NodeId::new(i));
         }
 
         for i in 4..8 {
-            pool.remove(NodeId(i));
+            pool.remove(NodeId::new(i));
         }
 
         pool.collect_garbage();
@@ -860,12 +860,12 @@ mod tests {
         let mut pool = Pool::<TUVec3u8>::with_capacity(16);
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId(i as u32));
+            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
         }
 
-        pool.tombstone(ElementId(4));
-        pool.tombstone(ElementId(6));
-        pool.tombstone(ElementId(10));
+        pool.tombstone(ElementId::new(4));
+        pool.tombstone(ElementId::new(6));
+        pool.tombstone(ElementId::new(10));
 
         assert_eq!(pool.len(), 13);
         assert_eq!(pool.garbage_len(), 3);
@@ -881,12 +881,12 @@ mod tests {
         let mut pool = Pool::<TUVec3u8>::with_capacity(16);
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId(i as u32));
+            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
         }
 
-        pool.remove(ElementId(4));
-        pool.remove(ElementId(6));
-        pool.remove(ElementId(10));
+        pool.remove(ElementId::new(4));
+        pool.remove(ElementId::new(6));
+        pool.remove(ElementId::new(10));
 
         assert_eq!(pool.len(), 13);
         assert_eq!(pool.garbage_len(), 3);
@@ -902,15 +902,15 @@ mod tests {
         let mut pool = Pool::<TUVec3u8>::with_capacity(16);
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId(i as u32));
+            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
         }
 
-        pool.tombstone(ElementId(4));
-        pool.remove(ElementId(6));
-        pool.tombstone(ElementId(8));
-        pool.remove(ElementId(10));
-        pool.tombstone(ElementId(12));
-        pool.remove(ElementId(14));
+        pool.tombstone(ElementId::new(4));
+        pool.remove(ElementId::new(6));
+        pool.tombstone(ElementId::new(8));
+        pool.remove(ElementId::new(10));
+        pool.tombstone(ElementId::new(12));
+        pool.remove(ElementId::new(14));
 
         assert_eq!(pool.len(), 10);
         assert_eq!(pool.garbage_len(), 6);
@@ -929,7 +929,7 @@ mod tests {
         assert_eq!(iter.size_hint(), (0, Some(0)));
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId(i as u32));
+            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
 
             let i = i as usize;
             let iter = pool.iter();
@@ -937,14 +937,14 @@ mod tests {
         }
 
         for i in [0, 2, 4, 6].into_iter() {
-            pool.tombstone(ElementId(i as u32));
+            pool.tombstone(ElementId::new(i as u32));
 
             let iter = pool.iter();
             assert_eq!(iter.size_hint(), (0, Some(16)));
         }
 
         for i in [1, 3, 5, 7].into_iter() {
-            pool.remove(ElementId(i));
+            pool.remove(ElementId::new(i));
 
             let iter = pool.iter();
             assert_eq!(iter.size_hint(), (0, Some(16)));
@@ -999,7 +999,7 @@ mod tests {
         assert_eq!(iter.size_hint(), (0, Some(0)));
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId(i as u32));
+            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
 
             let i = i as usize;
             let iter = pool.iter_mut();
@@ -1007,14 +1007,14 @@ mod tests {
         }
 
         for i in [0, 2, 4, 6].into_iter() {
-            pool.tombstone(ElementId(i as u32));
+            pool.tombstone(ElementId::new(i as u32));
 
             let iter = pool.iter_mut();
             assert_eq!(iter.size_hint(), (0, Some(16)));
         }
 
         for i in [1, 3, 5, 7].into_iter() {
-            pool.remove(ElementId(i));
+            pool.remove(ElementId::new(i));
 
             let iter = pool.iter_mut();
             assert_eq!(iter.size_hint(), (0, Some(16)));
