@@ -1,10 +1,10 @@
 //! Helper functions with a custom intersection closure.
 
 use crate::{
+    ElementId, NodeId, Volume,
     bounding::{Aabb, Unsigned},
     node::NodeType,
     tree::Octree,
-    ElementId, NodeId, Volume,
 };
 use alloc::vec::Vec;
 use heapless::Vec as HVec;
@@ -78,9 +78,9 @@ where
         while let Some(node) = stack.pop() {
             let n = self.nodes[node];
             match n.ntype {
-                NodeType::Empty => (),
+                NodeType::Leaf(None) => (),
 
-                NodeType::Leaf(e) => {
+                NodeType::Leaf(Some(e)) => {
                     let aabb = self.elements[e].volume();
                     if what(&aabb) {
                         elements.push(e);
@@ -143,10 +143,10 @@ where
         while let Some(node) = stack.pop() {
             let n = self.nodes[node];
             match n.ntype {
-                NodeType::Empty => (),
+                NodeType::Leaf(None) => (),
 
-                NodeType::Leaf(e) => {
-                    let e = &self.elements[e];
+                NodeType::Leaf(Some(id)) => {
+                    let e = &self.elements[id];
                     let aabb = e.volume();
                     if what(&aabb) {
                         actor(e);

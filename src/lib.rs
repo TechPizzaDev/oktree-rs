@@ -303,6 +303,7 @@ where
 /// Index [`tree.nodes`](pool::Pool) with it.
 ///
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[repr(transparent)]
 pub struct NodeId(NonZeroU32);
 
 impl NodeId {
@@ -359,6 +360,7 @@ impl fmt::Display for NodeId {
 /// let element: &TUVec3u16 = tree.get_element(ElementId(0)).unwrap();
 /// ```
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[repr(transparent)]
 pub struct ElementId(NonZeroU32);
 
 impl ElementId {
@@ -493,7 +495,7 @@ mod tests {
         assert_eq!(tree.nodes.len(), 1);
         assert_eq!(tree.nodes.garbage_len(), 0);
 
-        assert_eq!(tree.nodes[0.into()].ntype, NodeType::Leaf(0.into()));
+        assert_eq!(tree.nodes[0.into()].ntype, NodeType::Leaf(Some(0.into())));
         assert_eq!(tree.nodes[0.into()].parent, None);
 
         let c2 = DummyCell::new(TUVec3::new(7, 7, 7));
@@ -507,9 +509,9 @@ mod tests {
 
         assert_eq!(tree.nodes[0.into()].parent, None);
 
-        assert_eq!(tree.nodes[1.into()].ntype, NodeType::Leaf(0.into()));
+        assert_eq!(tree.nodes[1.into()].ntype, NodeType::Leaf(Some(0.into())));
         assert_eq!(tree.nodes[1.into()].parent, Some(0.into()));
-        assert_eq!(tree.nodes[8.into()].ntype, NodeType::Leaf(1.into()));
+        assert_eq!(tree.nodes[8.into()].ntype, NodeType::Leaf(Some(1.into())));
         assert_eq!(tree.nodes[8.into()].parent, Some(0.into()));
         for i in 2..8 {
             assert_eq!(tree.nodes[i.into()].ntype, NodeType::Empty);
@@ -524,7 +526,7 @@ mod tests {
         assert_eq!(tree.insert(c1), Ok(ElementId::new(0)));
         let c2 = DummyCell::new(TUVec3::new(2, 2, 2));
         assert_eq!(tree.insert(c2), Ok(ElementId::new(1)));
-        assert_eq!(tree.nodes[17.into()].ntype, NodeType::Leaf(0.into()));
+        assert_eq!(tree.nodes[17.into()].ntype, NodeType::Leaf(Some(0.into())));
 
         assert_eq!(tree.nodes.len(), 25);
 

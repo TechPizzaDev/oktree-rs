@@ -45,19 +45,28 @@ impl<U: Unsigned> Node<U> {
 /// - [`NodeType::Empty`]. Empty node.
 /// - [`NodeType::Leaf`]. Node, containig a single [`ElementId`].
 /// - [`NodeType::Branch`]. Node, containig a 8 child nodes.
-#[derive(Default, Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum NodeType {
-    #[default]
-    Empty,
-    Leaf(ElementId),
+    Leaf(Option<ElementId>),
     Branch(Branch),
+}
+
+impl NodeType {
+    pub const Empty: Self = NodeType::Leaf(None);
+}
+
+impl Default for NodeType {
+    #[inline]
+    fn default() -> Self {
+        Self::Empty
+    }
 }
 
 impl fmt::Display for NodeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            NodeType::Empty => write!(f, "NodeType: Empty"),
-            NodeType::Leaf(e) => write!(f, "NodeType: Leaf({e})"),
+            NodeType::Leaf(None) => write!(f, "NodeType: Empty"),
+            NodeType::Leaf(Some(e)) => write!(f, "NodeType: Leaf({e})"),
             NodeType::Branch(branch) => write!(f, "NodeType: Branch({:?})", branch),
         }
     }

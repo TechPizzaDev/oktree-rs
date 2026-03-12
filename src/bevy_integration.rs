@@ -117,9 +117,9 @@ where
             let aabb: Aabb3d = n.aabb.into();
             if ray.intersects(&aabb) {
                 match n.ntype {
-                    NodeType::Empty => (),
+                    NodeType::Leaf(None) => (),
 
-                    NodeType::Leaf(element) => {
+                    NodeType::Leaf(Some(element)) => {
                         let aabb = self.elements[element].volume().into();
                         if let Some(dist) = ray.aabb_intersection_at(&aabb) {
                             match hit.element {
@@ -199,9 +199,9 @@ where
         while let Some(node) = stack.pop() {
             let n = self.nodes[node];
             match n.ntype {
-                NodeType::Empty => (),
+                NodeType::Leaf(None) => (),
 
-                NodeType::Leaf(e) => {
+                NodeType::Leaf(Some(e)) => {
                     let aabb = self.elements[e].volume().into();
                     if volume.intersects(&aabb) {
                         elements.push(e);

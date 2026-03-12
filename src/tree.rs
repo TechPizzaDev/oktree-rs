@@ -137,12 +137,12 @@ where
 
         let n = &mut self.nodes[node];
         match n.ntype {
-            NodeType::Empty => {
-                n.ntype = NodeType::Leaf(element);
+            NodeType::Leaf(None) => {
+                n.ntype = NodeType::Leaf(Some(element));
                 Some(element)
             }
 
-            NodeType::Leaf(e) => {
+            NodeType::Leaf(Some(e)) => {
                 if n.aabb.unit() {
                     return None; // ignore
                 }
@@ -232,9 +232,9 @@ where
 
         let ntype = self.nodes[node].ntype;
         match ntype {
-            NodeType::Empty => (),
+            NodeType::Leaf(None) => (),
 
-            NodeType::Leaf(e) if e == element => {
+            NodeType::Leaf(Some(e)) if e == element => {
                 self.nodes[node].ntype = NodeType::Empty;
                 if let Some(parent) = parent {
                     self.nodes.maybe_collapse(parent);
@@ -301,9 +301,9 @@ where
         loop {
             let ntype = self.nodes[node].ntype;
             return match ntype {
-                NodeType::Empty => None,
+                NodeType::Leaf(None) => None,
 
-                NodeType::Leaf(e) => {
+                NodeType::Leaf(Some(e)) => {
                     if self.elements[e].volume().contains(point) {
                         Some(e)
                     } else {

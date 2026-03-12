@@ -260,11 +260,7 @@ impl<T> Pool<T> {
         }
         self.garbage.extend(carry_over);
 
-        if is_err {
-            Err(TombstoneError)
-        } else {
-            Ok(())
-        }
+        if is_err { Err(TombstoneError) } else { Ok(()) }
     }
 
     /// Collects all the garbage elements and removes them from the pool
@@ -809,7 +805,10 @@ mod tests {
     fn test_remove() {
         let mut pool = Pool::<TUVec3u8>::with_capacity(16);
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
+            assert_eq!(
+                pool.insert(TUVec3u8::new(i, i, i)),
+                ElementId::new(i as u32)
+            );
             assert_eq!(pool.len(), (i + 1) as usize);
             assert_eq!(pool.garbage_len(), 0_usize);
         }
@@ -838,7 +837,10 @@ mod tests {
         let mut pool = Pool::<TUVec3u8>::with_capacity(16);
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
+            assert_eq!(
+                pool.insert(TUVec3u8::new(i, i, i)),
+                ElementId::new(i as u32)
+            );
         }
 
         for i in 0..4 {
@@ -860,7 +862,10 @@ mod tests {
         let mut pool = Pool::<TUVec3u8>::with_capacity(16);
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
+            assert_eq!(
+                pool.insert(TUVec3u8::new(i, i, i)),
+                ElementId::new(i as u32)
+            );
         }
 
         pool.tombstone(ElementId::new(4));
@@ -881,7 +886,10 @@ mod tests {
         let mut pool = Pool::<TUVec3u8>::with_capacity(16);
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
+            assert_eq!(
+                pool.insert(TUVec3u8::new(i, i, i)),
+                ElementId::new(i as u32)
+            );
         }
 
         pool.remove(ElementId::new(4));
@@ -902,7 +910,10 @@ mod tests {
         let mut pool = Pool::<TUVec3u8>::with_capacity(16);
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
+            assert_eq!(
+                pool.insert(TUVec3u8::new(i, i, i)),
+                ElementId::new(i as u32)
+            );
         }
 
         pool.tombstone(ElementId::new(4));
@@ -929,7 +940,10 @@ mod tests {
         assert_eq!(iter.size_hint(), (0, Some(0)));
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
+            assert_eq!(
+                pool.insert(TUVec3u8::new(i, i, i)),
+                ElementId::new(i as u32)
+            );
 
             let i = i as usize;
             let iter = pool.iter();
@@ -999,7 +1013,10 @@ mod tests {
         assert_eq!(iter.size_hint(), (0, Some(0)));
 
         for i in 0..16 {
-            assert_eq!(pool.insert(TUVec3u8::new(i, i, i)), ElementId::new(i as u32));
+            assert_eq!(
+                pool.insert(TUVec3u8::new(i, i, i)),
+                ElementId::new(i as u32)
+            );
 
             let i = i as usize;
             let iter = pool.iter_mut();
