@@ -107,13 +107,7 @@ where
 
             let mut was_inserted = false;
             while let Some(insertion) = insertions.pop() {
-                match self._insert(insertion, &mut insertions) {
-                    Ok(e) => was_inserted |= e == Some(element),
-                    Err(err) => {
-                        self.elements.tombstone(element);
-                        return Err(err);
-                    }
-                }
+                was_inserted |= self._insert(insertion, &mut insertions) == Some(element);
             }
 
             if !was_inserted {
@@ -138,7 +132,7 @@ where
         &mut self,
         insertion: Insertion<U>,
         insertions: &mut SmallVec<[Insertion<U>; C]>,
-    ) -> Result<Option<ElementId>, TreeError> {
+    ) -> Option<ElementId> {
         let Insertion {
             element,
             node,
@@ -149,18 +143,18 @@ where
         match n.ntype {
             NodeType::Empty => {
                 n.ntype = NodeType::Leaf(element);
-                Ok(Some(element))
+                Some(element)
             }
 
             NodeType::Leaf(e) => {
                 if n.aabb.unit() {
-                    return Ok(None); // ignore
+                    return None; // ignore
                 }
 
                 let e1 = self.elements[e].volume();
                 let e2 = self.elements[element].volume();
                 if e1.overlaps(&e2) {
-                    return Ok(None);
+                    return None;
                 }
 
                 let children = self.nodes.branch(node);
@@ -173,7 +167,7 @@ where
                     node,
                     volume: e1,
                 });
-                Ok(None)
+                None
             }
 
             NodeType::Branch(branch) => {
@@ -184,7 +178,7 @@ where
                         volume,
                     });
                 });
-                Ok(None)
+                None
             }
         }
     }
@@ -214,7 +208,7 @@ where
                     node: self.root,
                 });
                 while let Some(removal) = removals.pop() {
-                    self._remove(elem, volume, removal, &mut removals)?;
+                    self._remove(elem, volume, removal, &mut removals);
                 }
                 self.elements.tombstone(elem);
                 Ok(())
@@ -233,32 +227,31 @@ where
     }
 
     #[inline]
-    fn _remove(
+    fn _remove<const C: usize>(
         &mut self,
         element: ElementId,
         volume: Aabb<U>,
         removal: Removal,
-        removals: &mut SmallVec<[Removal; 16]>,
-    ) -> Result<(), TreeError> {
+        removals: &mut SmallVec<[Removal; C]>,
+    ) {
         let Removal { parent, node } = removal;
 
         if self.nodes.is_garbage(node) {
-            return Ok(());
+            return;
         }
 
         let ntype = self.nodes[node].ntype;
         match ntype {
-            NodeType::Empty => Ok(()),
+            NodeType::Empty => (),
 
             NodeType::Leaf(e) if e == element => {
                 self.nodes[node].ntype = NodeType::Empty;
                 if let Some(parent) = parent {
                     self.nodes.maybe_collapse(parent);
                 }
-                Ok(())
             }
 
-            NodeType::Leaf(_) => Ok(()),
+            NodeType::Leaf(_) => (),
 
             NodeType::Branch(branch) => {
                 branch.walk_children_inclusive(&self.nodes, &volume, |child| {
@@ -267,7 +260,6 @@ where
                         node: child,
                     });
                 });
-                Ok(())
             }
         }
     }
