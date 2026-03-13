@@ -35,7 +35,7 @@ where
     where
         F: Fn(&Aabb<U>) -> bool,
     {
-        let mut elements = Vec::with_capacity(10);
+        let mut elements = Vec::new();
         self.rintersect_with(self.root, &what, &mut elements);
         elements
     }
@@ -72,7 +72,7 @@ where
         F: Fn(&Aabb<U>) -> bool,
     {
         // We use a heapless stack to loop through the nodes until we complete the intersect however
-        // if the stack becomes full then then we fallbackon recursive calls.
+        // if the stack becomes full then then we fallback on recursive calls.
         let mut stack = HVec::<_, 32>::new();
         stack.push(node).unwrap();
         while let Some(node) = stack.pop() {
@@ -90,13 +90,13 @@ where
                 NodeType::Branch(branch) => {
                     if what(&n.aabb) {
                         let mut iter = branch.children.iter();
-                        while let Some(child) = iter.next() {
+                        while let Some(&child) = iter.next() {
                             // If we can't push to the stack (to be processed on the next loop
                             // iteration) then we fallback to recursive calls.
-                            if stack.push(*child).is_err() {
-                                self.rintersect_with(*child, what, elements);
-                                for child in iter.by_ref() {
-                                    self.rintersect_with(*child, what, elements);
+                            if let Err(child) = stack.push(child) {
+                                self.rintersect_with(child, what, elements);
+                                for &child in iter.by_ref() {
+                                    self.rintersect_with(child, what, elements);
                                 }
                             }
                         }
@@ -126,7 +126,7 @@ where
     pub fn intersect_with_for_each<F, F2>(&self, what: F, mut actor: F2)
     where
         F: Fn(&Aabb<U>) -> bool,
-        F2: FnMut(&T),
+        F2: FnMut(ElementId, &T),
     {
         self.rintersect_with_for_each(self.root, &what, &mut actor);
     }
@@ -134,7 +134,7 @@ where
     fn rintersect_with_for_each<F, F2>(&self, node: NodeId, what: &F, actor: &mut F2)
     where
         F: Fn(&Aabb<U>) -> bool,
-        F2: FnMut(&T),
+        F2: FnMut(ElementId, &T),
     {
         // We use a heapless stack to loop through the nodes until we complete the intersect however
         // if the stack becomes full then then we fallbackon recursive calls.
@@ -149,20 +149,20 @@ where
                     let e = &self.elements[id];
                     let aabb = e.volume();
                     if what(&aabb) {
-                        actor(e);
+                        actor(id, e);
                     };
                 }
 
                 NodeType::Branch(branch) => {
                     if what(&n.aabb) {
                         let mut iter = branch.children.iter();
-                        while let Some(child) = iter.next() {
+                        while let Some(&child) = iter.next() {
                             // If we can't push to the stack (to be processed on the next loop
                             // iteration) then we fallback to recursive calls.
-                            if stack.push(*child).is_err() {
-                                self.rintersect_with_for_each(*child, what, actor);
-                                for child in iter.by_ref() {
-                                    self.rintersect_with_for_each(*child, what, actor);
+                            if let Err(child) = stack.push(child) {
+                                self.rintersect_with_for_each(child, what, actor);
+                                for &child in iter.by_ref() {
+                                    self.rintersect_with_for_each(child, what, actor);
                                 }
                             }
                         }
